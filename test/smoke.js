@@ -96,12 +96,16 @@ try {
     "tdd-green.md",
     "tdd-refactor.md",
     "database-reviewer.md",
+    "acquire-codebase.md",
+    "agent-owasp.md",
+    "ai-team.md",
+    "prompt-safety.md",
   ].forEach((f) =>
     assert(fs.existsSync(path.join(tmp, ".claude", "agents", f)), `claude agent scaffolded: ${f}`)
   );
 
   // new commands are scaffolded
-  ["tdd.md", "context-map.md", "refactor-plan.md", "discover.md"].forEach((f) =>
+  ["tdd.md", "context-map.md", "refactor-plan.md", "discover.md", "spec-driven.md", "breakdown.md", "llms-txt.md", "git-release.md"].forEach((f) =>
     assert(fs.existsSync(path.join(tmp, ".claude", "commands", f)), `claude command scaffolded: ${f}`)
   );
 
