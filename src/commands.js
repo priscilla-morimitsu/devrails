@@ -247,4 +247,84 @@ function audit(cwd, opts) {
   return false;
 }
 
-module.exports = { init, sync, check, audit };
+// ---- report ------------------------------------------------------------------
+// Reads logs/devrails/session.log and generates a markdown activity summary.
+function report(cwd, opts) {
+  const logFile = opts.logFile || path.join(cwd, "logs", "devrails", "session.log");
+  if (!fs.existsSync(logFile)) {
+    console.error(`devrails report: no log file found at ${path.relative(cwd, logFile)}`);
+    console.error("  Run a Claude Code session first (the posttooluse-logger.sh hook writes logs automatically).");
+    process.exit(1);
+  }
+
+  const raw = fs.readFileSync(logFile, "utf8").trim();
+  if (!raw) {
+    console.log("devrails report: log is empty.");
+    return;
+  }
+
+  const entries = raw
+    .split("\n")
+    .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+    .filter(Boolean);
+
+  if (entries.length === 0) {
+    console.log("devrails report: no parseable entries in log.");
+    return;
+  }
+
+  // Filter by --since (ISO date prefix, e.g. "2024-06-01")
+  const since = opts.since ? new Date(opts.since) : null;
+  const filtered = since ? entries.filter((e) => e.timestamp && new Date(e.timestamp) >= since) : entries;
+
+  if (filtered.length === 0) {
+    console.log(`devrails report: no entries since ${opts.since}.`);
+    return;
+  }
+
+  // Group by session date (YYYY-MM-DD) then by tool
+  const byDate = {};
+  for (const e of filtered) {
+    const day = (e.timestamp || "unknown").slice(0, 10);
+    if (!byDate[day]) byDate[day] = [];
+    byDate[day].push(e);
+  }
+
+  const lines = ["# devrails session report", ""];
+  for (const day of Object.keys(byDate).sort()) {
+    lines.push(`## ${day}`);
+    lines.push("");
+    const toolCounts = {};
+    const filesChanged = new Set();
+    for (const e of byDate[day]) {
+      toolCounts[e.tool] = (toolCounts[e.tool] || 0) + 1;
+      if (e.file) filesChanged.add(e.file);
+    }
+    lines.push(`**${byDate[day].length} tool invocations** across ${filesChanged.size} file(s)`);
+    lines.push("");
+    lines.push("| Tool | Count |");
+    lines.push("|------|-------|");
+    for (const [tool, count] of Object.entries(toolCounts).sort((a, b) => b[1] - a[1])) {
+      lines.push(`| ${tool} | ${count} |`);
+    }
+    lines.push("");
+    if (filesChanged.size > 0) {
+      lines.push("**Files touched:**");
+      for (const f of [...filesChanged].sort()) {
+        lines.push(`- ${f}`);
+      }
+      lines.push("");
+    }
+  }
+
+  const md = lines.join("\n");
+
+  if (opts.output) {
+    fs.writeFileSync(path.resolve(cwd, opts.output), md);
+    console.log(`devrails report: written to ${opts.output}`);
+  } else {
+    console.log(md);
+  }
+}
+
+module.exports = { init, sync, check, audit, report };

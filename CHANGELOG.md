@@ -2,6 +2,22 @@
 
 This project adheres to [Semantic Versioning](https://semver.org).
 
+## [0.2.6] - 2026-06-05
+
+### Added
+- **`database-reviewer` agent** — reviews Prisma/Drizzle schemas, raw SQL, migrations, and data-access functions for N+1 queries, missing indexes, migration safety, SQL injection risk, and data integrity constraints. Read-only (reports findings, does not edit files).
+- **`database.md` rule** — guardrail rules for database access: parameterized queries, unbounded queries, N+1 detection, index requirements, migration discipline (additive-first, backfill discipline, rollback planning), and data integrity (ON DELETE behavior, transactions, optimistic locking, soft-delete filtering).
+- **Enhanced `security.md` rule** — added an AI/LLM Security section covering OWASP LLM Top 10: prompt injection (LLM01), insecure output handling (LLM02), training data poisoning (LLM03), excessive agency (LLM08), model access controls, sensitive data in prompts (LLM06), and supply chain (LLM05).
+- **`architect` agent** — system architecture reviewer. Reads source code and produces findings grouped by severity (Critical / Significant / Suggestion) across security, data model, API surface, scalability, AI/agent systems, and operational concerns. Can create ADRs at `docs/architecture/ADR-NNN-<title>.md`. Read-only on source files.
+- **`tech-writer` agent** — documentation writer for READMEs, API/Server Action docs, JSDoc, ADRs, and changelogs. Reads source files to verify accuracy before writing. Does not modify source code.
+- **`tdd-red` agent** — TDD red phase: writes failing tests before any implementation, following AAA pattern. Presents a test plan and waits for confirmation before writing. Part of the `/tdd` workflow.
+- **`tdd-green` agent** — TDD green phase: writes the minimum production code to make failing tests pass. Lists shortcuts for the refactor phase. Does not modify tests.
+- **`tdd-refactor` agent** — TDD refactor phase: cleans up the implementation after tests are green, applying code-standards, nextjs-patterns, and security-review. Does not add features not covered by tests.
+- **`/tdd` command** — orchestrates the full TDD cycle (red → green → refactor) through the three TDD agents, with user confirmation gates between phases.
+- **`/context-map` command** — maps the callers, dependencies, and shared contracts of a file or feature before a change, so the blast radius and sequencing are clear.
+- **`/refactor-plan` command** — sequences a multi-file refactor into safe, atomic, independently-committable steps with rollback paths. Flags coordination points (migrations, feature flags).
+- **`devrails report`** — reads `logs/devrails/session.log` (written by the `posttooluse-logger` hook) and generates a markdown activity summary grouped by day, showing tool invocations and files touched. Accepts `--since <date>` and `--output <file>`.
+
 ## [0.2.5] - 2026-06-05
 
 ### Added

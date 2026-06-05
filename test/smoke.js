@@ -3,7 +3,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { init, sync, audit } = require("../src/commands.js");
+const { init, sync, audit, report } = require("../src/commands.js");
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "devrails-test-"));
 const origCwd = process.cwd();
@@ -87,6 +87,41 @@ try {
   fs.writeFileSync(path.join(srcDir, "bad.ts"), 'const x: unknown = 1;\n');
   const auditFixed = audit(tmp, {});
   assert(auditFixed === true, "audit returns true after violations are fixed");
+
+  // new agents are scaffolded
+  [
+    "architect.md",
+    "tech-writer.md",
+    "tdd-red.md",
+    "tdd-green.md",
+    "tdd-refactor.md",
+    "database-reviewer.md",
+  ].forEach((f) =>
+    assert(fs.existsSync(path.join(tmp, ".claude", "agents", f)), `claude agent scaffolded: ${f}`)
+  );
+
+  // new commands are scaffolded
+  ["tdd.md", "context-map.md", "refactor-plan.md"].forEach((f) =>
+    assert(fs.existsSync(path.join(tmp, ".claude", "commands", f)), `claude command scaffolded: ${f}`)
+  );
+
+  // database rule is scaffolded
+  assert(fs.existsSync(path.join(tmp, ".devrails", "rules", "database.md")), "database rule scaffolded");
+
+  assert(typeof report === "function", "report is exported");
+
+  // report: with a valid log file
+  const logDir = path.join(tmp, "logs", "devrails");
+  fs.mkdirSync(logDir, { recursive: true });
+  const logFile = path.join(logDir, "session.log");
+  fs.writeFileSync(logFile, JSON.stringify({ timestamp: new Date().toISOString(), tool: "Write", file: "src/foo.ts", cwd: tmp }) + "\n");
+  // capture stdout
+  let reportOut = "";
+  const origWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = (s) => { reportOut += s; return true; };
+  report(tmp, {});
+  process.stdout.write = origWrite;
+  assert(/devrails session report/.test(reportOut), "report generates markdown output");
 
   console.log("\nGenerated tree:");
   const walk = (d, p = "") => fs.readdirSync(d, { withFileTypes: true }).forEach((e) => {

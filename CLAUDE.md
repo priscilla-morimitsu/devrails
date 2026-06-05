@@ -16,6 +16,8 @@ node bin/devrails.js sync         # regenerate target files from .devrails/rules
 node bin/devrails.js audit        # scan whole project and report all violations
 node bin/devrails.js audit ./src  # scan a subdirectory
 node bin/devrails.js check --staged   # run guardrails on staged files (git hook entry point)
+node bin/devrails.js report       # markdown summary of session.log activity
+node bin/devrails.js report --since 2024-06-01 --output report.md
 ```
 
 There is no build step — plain CommonJS, no compilation.
@@ -25,16 +27,21 @@ There is no build step — plain CommonJS, no compilation.
 ```
 bin/devrails.js     Entry point — requires src/cli.js and calls main()
 src/cli.js          Arg parsing and command dispatch
-src/commands.js     init / sync / check / audit implementations
+src/commands.js     init / sync / check / audit / report implementations
 src/targets.js      One writer per target (agents, claude, gemini, cursor, copilot)
 src/lib.js          Shared helpers: writeFile, slugify, ensureDir, copyDir,
                     GENERATED_BANNER, frontmatter parser, loadRules, loadConfig,
                     walkProjectFiles
 src/scaffold/       Files copied verbatim into a project's .devrails/ by `init`
-  .devrails/rules/          Default rule set (security, code-standards, nextjs, accessibility)
+  .devrails/rules/          Default rule set (security, code-standards, nextjs, accessibility, database)
   .devrails/guardrails/     block-secrets.sh + check-code-quality.sh — installed into user projects
   .devrails/templates/      PRD / spec / ADR markdown templates
-  claude-assets/            Bundled Claude Code extras (agents, commands, hook adapter scripts)
+  claude-assets/            Bundled Claude Code extras:
+    agents/   code-reviewer, security-auditor, accessibility-auditor, test-writer,
+              architect, tech-writer, tdd-red, tdd-green, tdd-refactor, database-reviewer
+    commands/ review, new-feature, tdd, context-map, refactor-plan
+    hooks/    pretooluse-secrets, pretooluse-guardian, posttooluse-quality,
+              posttooluse-licenses, posttooluse-logger
 test/smoke.js       End-to-end test: scaffolds into a temp dir, asserts all outputs and audit behavior
 docs/               Additional documentation
 ```
@@ -50,6 +57,7 @@ docs/               Additional documentation
    - `copilot` → global rules → `.github/copilot-instructions.md`; scoped rules → `.github/instructions/<slug>.instructions.md` with `applyTo` frontmatter
 4. **`check`** collects files (from CLI args or `--staged` via `git diff --cached --name-only`), runs each `.sh` in `.devrails/guardrails/` over them, exits non-zero on violation. Used by the git hook and CI.
 5. **`audit`** walks the whole project via `walkProjectFiles` (skips `node_modules`, `.git`, `.devrails`, `dist`, `.next`, etc.), runs every guardrail script via `spawnSync` with `stderr: pipe`, parses violation lines (lines matching `  [script-name] ...`), and prints a grouped report. Returns `true` (clean) or `false` (violations found) — the CLI calls `process.exit(1)` on false.
+6. **`report`** reads `logs/devrails/session.log` (written by `posttooluse-logger`), parses NDJSON entries, groups by day, and prints (or writes) a markdown summary table of tool invocations and files touched.
 
 ## Guardrail scripts
 
