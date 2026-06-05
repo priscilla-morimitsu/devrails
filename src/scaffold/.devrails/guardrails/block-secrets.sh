@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
 #
-# devrails :: block-secrets (tool-agnostic guardrail)
+# devrails :: block-secrets
 #
 # Usage: block-secrets.sh <file> [<file> ...]
-# Scans the given files for hardcoded secrets and for secrets leaking into
-# client-reachable code. Exit 0 = clean, exit 1 = violations found.
+# Scans the given files for hardcoded secrets and secrets leaking into
+# client-reachable code. Reports every matching line with its line number.
+# Exit 0 = clean, exit 1 = violations found.
 #
-# This runs from `devrails check`, which is wired into the git pre-commit hook
-# and CI — so enforcement works regardless of which AI tool wrote the code.
+# This runs from `devrails check` (git hook / CI) and `devrails audit`.
 
 set -uo pipefail
 
 violations=0
-report() { echo "  [block-secrets] $1: $2" >&2; violations=$((violations+1)); }
+report() { echo "  [block-secrets] $1" >&2; violations=$((violations+1)); }
+
+# scan <file> <grep-pattern> <message>
+# Finds every matching line in the file and reports each one individually.
+scan() {
+  local f="$1" pattern="$2" msg="$3" lineno
+  while IFS= read -r lineno; do
+    [ -n "$lineno" ] && report "$f:$lineno: $msg"
+  done < <(grep -niE "$pattern" "$f" 2>/dev/null | grep -v '^\s*//' | cut -d: -f1 || true)
+}
 
 for f in "$@"; do
   [ -f "$f" ] || continue
@@ -21,23 +30,34 @@ for f in "$@"; do
     *) continue ;;
   esac
 
-  content="$(cat "$f")"
+  scan "$f" \
+    "(api[_-]?key|secret|client[_-]?secret|access[_-]?token|auth[_-]?token|private[_-]?key|password|passwd)[\"'][[:space:]]*[:=][[:space:]]*[\"'][^\"']{8,}" \
+    "hardcoded credential (key/secret/token/password assigned a literal value)."
 
-  printf '%s' "$content" | grep -Eiq '(api[_-]?key|secret|client[_-]?secret|access[_-]?token|auth[_-]?token|private[_-]?key|password|passwd)["'"'"']?\s*[:=]\s*["'"'"'][^"'"'"']{8,}' \
-    && report "$f" "possible hardcoded credential (key/secret/token/password = literal)."
+  scan "$f" \
+    "(AKIA|ASIA)[A-Z0-9]{16}" \
+    "possible AWS access key ID."
 
-  printf '%s' "$content" | grep -Eq '(AKIA|ASIA)[A-Z0-9]{16}'       && report "$f" "possible AWS access key ID."
-  printf '%s' "$content" | grep -Eq 'sk-[A-Za-z0-9]{20,}'           && report "$f" "possible API secret key (sk-... )."
-  printf '%s' "$content" | grep -Eq 'gh[pousr]_[A-Za-z0-9]{30,}'    && report "$f" "possible GitHub token."
-  printf '%s' "$content" | grep -Eq -- '-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----' \
-    && report "$f" "private key material in source."
+  scan "$f" \
+    "sk-[A-Za-z0-9]{20,}" \
+    "possible API secret key (sk-... pattern)."
 
-  printf '%s' "$content" | grep -Eiq 'NEXT_PUBLIC_[A-Z0-9_]*(SECRET|KEY|TOKEN|PASSWORD|PRIVATE)' \
-    && report "$f" "secret-looking value exposed via NEXT_PUBLIC_ (reaches the browser)."
+  scan "$f" \
+    "-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----" \
+    "private key material embedded in source."
 
-  if printf '%s' "$content" | grep -q '"use client"'; then
-    printf '%s' "$content" | grep -Eq 'process\.env\.[A-Z0-9_]*(SECRET|KEY|TOKEN|PASSWORD|PRIVATE)' \
-      && report "$f" "server secret (process.env) referenced inside a \"use client\" component."
+  scan "$f" \
+    "gh[pousr]_[A-Za-z0-9]{30,}" \
+    "possible GitHub token."
+
+  scan "$f" \
+    "NEXT_PUBLIC_[A-Z0-9_]*(SECRET|KEY|TOKEN|PASSWORD|PRIVATE)" \
+    "secret exposed via NEXT_PUBLIC_ variable (reaches the browser)."
+
+  if grep -q '"use client"' "$f" 2>/dev/null; then
+    scan "$f" \
+      "process\.env\.[A-Z0-9_]*(SECRET|KEY|TOKEN|PASSWORD|PRIVATE)" \
+      'server secret (process.env) referenced inside a "use client" component.'
   fi
 done
 

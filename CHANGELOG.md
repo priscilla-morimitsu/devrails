@@ -2,6 +2,11 @@
 
 This project adheres to [Semantic Versioning](https://semver.org).
 
+## [0.2.4] - 2026-06-05
+
+### Fixed
+- `block-secrets` guardrail now reports **every matching line with its line number**, instead of one violation per pattern per file. Previously, a file with three hardcoded tokens was reported as a single violation — now each line appears individually, so `devrails audit` and `devrails check` give a complete picture of all exposures.
+
 ## [0.2.3] - 2026-06-05
 
 ### Changed
