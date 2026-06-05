@@ -1,6 +1,6 @@
 # /llms-txt
 
-Generates an `llms.txt` file at the project root — a standard context file that tells AI assistants what this project is, how it works, and which files matter most.
+Generates an `llms.txt` file at the project root following the official [llms.txt specification](https://llmstxt.org/). Serves as the entry point for AI assistants to understand and navigate the repository.
 
 ## Usage
 
@@ -8,47 +8,80 @@ Generates an `llms.txt` file at the project root — a standard context file tha
 /llms-txt
 ```
 
-## What this command does
+## Phase 1: Review spec + scan repo (parallel)
 
-1. Run one bash command to extract the essentials:
+Fetch the spec and scan the repo at the same time:
+
+**Fetch:** `https://llmstxt.org/` — read to confirm current format requirements before writing.
+
+**Bash scan:**
 ```bash
-node -e "try{const p=require('./package.json');console.log(p.name,p.description,p.version);}catch{}" 2>/dev/null; ls; find . -maxdepth 2 -name "README*" -o -name "CLAUDE.md" -o -name "AGENTS.md" 2>/dev/null | grep -v node_modules | head -10
+node -e "try{const p=require('./package.json');console.log(p.name,p.description,p.version);}catch{}" 2>/dev/null
+find . -maxdepth 4 \( -name "README*" -o -name "CONTRIBUTING*" -o -name "CHANGELOG*" -o -name "LICENSE*" -o -name "*.md" \) -not -path "*/node_modules/*" -not -path "*/.next/*" -not -path "*/dist/*" -not -path "*/.git/*" | sort | head -60
+ls docs/ spec/ examples/ 2>/dev/null
 ```
 
-2. Read `README.md` (or `CLAUDE.md` / `AGENTS.md` if no README) — first 100 lines only.
+Read `README.md` (first 80 lines only). Do not read more files than necessary to write accurate descriptions.
 
-3. Write `llms.txt` to the project root.
+## Phase 2: Plan content
 
-## Output format (`llms.txt`)
+Group discovered files into sections. Only include files that actually exist.
+
+| Section | What belongs here |
+|---------|------------------|
+| **Documentation** | README, CONTRIBUTING, guides, architecture docs |
+| **Specifications** | Technical specs, API contracts, data models |
+| **Examples** | Sample code, usage demos, templates |
+| **Configuration** | Setup guides, deployment, env configuration |
+| **Optional** | Secondary files an LLM can skip for shorter context (ADRs, changelogs, design decisions) |
+
+Omit sections with no relevant files.
+
+## Phase 3: Write `llms.txt`
+
+Exact format per the llms.txt spec:
 
 ```
-# <project name>
+# <Project Name>
 
-> <one-line description of what the project does>
+> <One sentence: what the project is and what problem it solves>
 
-<2–4 sentence summary: what it is, who uses it, what problem it solves>
+<Optional: 1–3 sentences of additional context — tech stack, target users, key constraints>
 
-## Key files
+## Documentation
 
-- <path>: <what it does>
-- <path>: <what it does>
-...
+- [<Descriptive name>](<relative-path>): <what an LLM gains from reading this>
+- ...
 
-## Architecture
+## Specifications
 
-<3–6 bullet points covering the main components and how they connect>
+- [<name>](<path>): <description>
 
-## How to run
+## Examples
 
-<the 2–4 commands needed to install, run, and test>
+- [<name>](<path>): <description>
 
-## What to read first
+## Configuration
 
-<ordered list of 3–5 files an AI assistant should read to understand the codebase>
+- [<name>](<path>): <description>
+
+## Optional
+
+- [<name>](<path>): <description>
 ```
+
+## Validation checklist
+
+Before writing the file, verify:
+- [ ] H1 header with project name (required)
+- [ ] Blockquote summary (recommended)
+- [ ] All links are valid relative paths to files that exist
+- [ ] No broken links, no invented files
+- [ ] `Optional` section contains only truly secondary content
+- [ ] File is concise — under 80 lines unless the repo genuinely requires more
 
 ## Rules
-- Keep the file under 80 lines total — it's context, not documentation.
-- File paths must be real (verifiable from the scan output).
-- No invented claims. If something is unclear, omit it.
+- Only reference files you confirmed exist in the scan output.
+- Descriptions must say what an LLM *gains* from the file, not just what the file *is*.
 - Overwrite any existing `llms.txt` — this command is idempotent.
+- If the spec at llmstxt.org has changed since the agent's knowledge cutoff, follow the fetched version.
