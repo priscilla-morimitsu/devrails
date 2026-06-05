@@ -2,6 +2,11 @@
 
 This project adheres to [Semantic Versioning](https://semver.org).
 
+## [0.2.3] - 2026-06-05
+
+### Changed
+- Version bump to publish `audit` command and `check-code-quality` guardrail (v0.2.2 was already on npm before these changes landed).
+
 ## [0.2.2] - 2026-06-05
 
 ### Added
