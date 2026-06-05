@@ -87,6 +87,7 @@ When the `claude` target is active, `init` also copies a curated set of agents, 
 | `tdd-green` | TDD green phase — minimum code to pass tests |
 | `tdd-refactor` | TDD refactor phase — cleans up without changing behavior |
 | `autoresearch` | Autonomous iterative experimentation loop — define a metric, the agent hill-climbs autonomously |
+| `audit-fix` | Runs `devrails audit`, groups violations by file, and fixes them interactively or with `--all` |
 
 ### Slash commands (`.claude/commands/`)
 
