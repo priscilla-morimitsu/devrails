@@ -88,6 +88,7 @@ When the `claude` target is active, `init` also copies a curated set of agents, 
 | `tdd-refactor` | TDD refactor phase — cleans up without changing behavior |
 | `autoresearch` | Autonomous iterative experimentation loop — define a metric, the agent hill-climbs autonomously |
 | `audit-fix` | Runs `devrails audit`, groups violations by file, and fixes them interactively or with `--all` |
+| `code-exemplars` | Scans the codebase and generates `docs/exemplars.md` — curated reference of high-quality code examples per architecture layer |
 
 ### Slash commands (`.claude/commands/`)
 

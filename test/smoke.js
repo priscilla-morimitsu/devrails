@@ -102,6 +102,7 @@ try {
     "prompt-safety.md",
     "autoresearch.md",
     "audit-fix.md",
+    "code-exemplars.md",
   ].forEach((f) =>
     assert(fs.existsSync(path.join(tmp, ".claude", "agents", f)), `claude agent scaffolded: ${f}`)
   );
