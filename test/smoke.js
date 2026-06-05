@@ -101,7 +101,7 @@ try {
   );
 
   // new commands are scaffolded
-  ["tdd.md", "context-map.md", "refactor-plan.md"].forEach((f) =>
+  ["tdd.md", "context-map.md", "refactor-plan.md", "discover.md"].forEach((f) =>
     assert(fs.existsSync(path.join(tmp, ".claude", "commands", f)), `claude command scaffolded: ${f}`)
   );
 
