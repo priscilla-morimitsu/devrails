@@ -2,6 +2,16 @@
 
 This project adheres to [Semantic Versioning](https://semver.org).
 
+## [0.2.2] - 2026-06-05
+
+### Added
+- **`devrails audit [dir]`** — scans the whole project (not just staged files) against every guardrail script and lists all violations grouped by guardrail. Designed for the "just installed devrails, what's broken?" workflow. Exits 0 when clean, 1 on any violation.
+- **`check-code-quality` guardrail** — second guardrail script, installed alongside `block-secrets`. Covers TypeScript/JS quality issues: `any` type usage (`: any`, `as any`, `Array<any>`, `Promise<any>`), leftover `console.log` in non-test files, and empty `catch {}` blocks.
+
+### Changed
+- `src/lib.js` exports `walkProjectFiles` — recursive project walker that skips `node_modules`, `.git`, `.devrails`, `dist`, `.next`, `build`, and other generated directories. Used by `audit`.
+- Smoke test updated to verify the full audit pass/fail/fix cycle end-to-end.
+
 ## [0.2.1] - 2026-06-05
 
 ### Added
