@@ -105,6 +105,7 @@ When the `claude` target is active, `init` also copies a curated set of agents, 
 | `/git-release` | Bump SemVer, update CHANGELOG, draft GitHub Release body |
 | `/llms-txt` | Generate `llms.txt` — context file for AI assistants (<80 lines) |
 | `/editorconfig` | Detects file types and generates a `.editorconfig` with per-language best practices |
+| `/spec` | Creates or updates a structured specification file in `spec/` optimized for AI consumption |
 | `/discover [-f]` | Find external resources that complement what devrails already provides |
 
 ### Hooks (`.claude/hooks/`)

@@ -32,7 +32,7 @@ O devrails já oferece os itens abaixo. Exclua-os das recomendações mesmo que 
 
 **Agents**: code-reviewer, security-auditor, accessibility-auditor, test-writer, architect, tech-writer, tdd-red, tdd-green, tdd-refactor, database-reviewer, acquire-codebase, agent-owasp, ai-team, prompt-safety, autoresearch, audit-fix, code-exemplars, draw-diagram
 
-**Comandos**: review, new-feature, tdd, context-map, refactor-plan, discover, spec-driven, breakdown, llms-txt, git-release, editorconfig
+**Comandos**: review, new-feature, tdd, context-map, refactor-plan, discover, spec-driven, breakdown, llms-txt, git-release, editorconfig, spec
 
 **Hooks**: pretooluse-secrets, pretooluse-guardian, posttooluse-quality, posttooluse-licenses, posttooluse-logger
 
