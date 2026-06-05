@@ -1,0 +1,36 @@
+{
+  "name": "devrails",
+  "version": "0.2.1",
+  "description": "Tool-agnostic guard-rails for AI-assisted development: one source of truth, synced to Claude Code, Cursor, Copilot, Gemini, and AGENTS.md, with deterministic enforcement via git hooks and CI.",
+  "bin": {
+    "devrails": "bin/devrails.js"
+  },
+  "type": "commonjs",
+  "files": [
+    "bin",
+    "src",
+    "LICENSE",
+    "README.md",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/smoke.js"
+  },
+  "license": "MIT",
+  "author": "Priscilla Morimitsu",
+  "keywords": [
+    "ai",
+    "llm",
+    "guardrails",
+    "agents-md",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "gemini",
+    "tool-agnostic",
+    "cli"
+  ]
+}
