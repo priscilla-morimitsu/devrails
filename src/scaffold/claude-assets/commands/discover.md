@@ -30,7 +30,7 @@ O devrails já oferece os itens abaixo. Exclua-os das recomendações mesmo que 
 
 **Regras**: security, code-standards, nextjs, accessibility, database
 
-**Agents**: code-reviewer, security-auditor, accessibility-auditor, test-writer, architect, tech-writer, tdd-red, tdd-green, tdd-refactor, database-reviewer, acquire-codebase, agent-owasp, ai-team, prompt-safety
+**Agents**: code-reviewer, security-auditor, accessibility-auditor, test-writer, architect, tech-writer, tdd-red, tdd-green, tdd-refactor, database-reviewer, acquire-codebase, agent-owasp, ai-team, prompt-safety, autoresearch
 
 **Comandos**: review, new-feature, tdd, context-map, refactor-plan, discover, spec-driven, breakdown, llms-txt, git-release
 

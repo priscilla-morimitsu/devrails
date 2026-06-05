@@ -86,6 +86,7 @@ When the `claude` target is active, `init` also copies a curated set of agents, 
 | `tdd-red` | TDD red phase — writes failing tests before implementation |
 | `tdd-green` | TDD green phase — minimum code to pass tests |
 | `tdd-refactor` | TDD refactor phase — cleans up without changing behavior |
+| `autoresearch` | Autonomous iterative experimentation loop — define a metric, the agent hill-climbs autonomously |
 
 ### Slash commands (`.claude/commands/`)
 
