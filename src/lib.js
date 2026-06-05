@@ -118,6 +118,30 @@ function detectTools(cwd) {
 
 const ALL_TARGETS = ["agents", "claude", "cursor", "copilot", "gemini"];
 
+// ---- Project file walker (used by `devrails audit`) --------------------------
+const AUDIT_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+const AUDIT_IGNORE_DIRS = new Set([
+  "node_modules", ".git", ".devrails", "dist", ".next", "build", "out",
+  "coverage", ".turbo", ".cache", ".svelte-kit", "vendor",
+]);
+
+function walkProjectFiles(rootDir, extensions = AUDIT_EXTENSIONS, ignoreDirs = AUDIT_IGNORE_DIRS) {
+  const results = [];
+  function walk(dir) {
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (!ignoreDirs.has(entry.name)) walk(path.join(dir, entry.name));
+      } else if (entry.isFile() && extensions.has(path.extname(entry.name))) {
+        results.push(path.join(dir, entry.name));
+      }
+    }
+  }
+  walk(rootDir);
+  return results;
+}
+
 module.exports = {
   GENERATED_BANNER,
   ALL_TARGETS,
@@ -130,4 +154,5 @@ module.exports = {
   writeFile,
   copyDir,
   detectTools,
+  walkProjectFiles,
 };

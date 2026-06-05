@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execFileSync } = require("child_process");
+const { execFileSync, spawnSync } = require("child_process");
 const {
   ALL_TARGETS,
   loadRules,
@@ -11,6 +11,7 @@ const {
   ensureDir,
   writeFile,
   detectTools,
+  walkProjectFiles,
 } = require("./lib.js");
 const { WRITERS } = require("./targets.js");
 
@@ -179,4 +180,71 @@ function init(cwd, opts) {
   console.log("\ndevrails: init complete. Edit .devrails/rules/ and re-run `devrails sync` anytime.");
 }
 
-module.exports = { init, sync, check };
+// ---- audit -------------------------------------------------------------------
+// Scans the whole project (not just staged files) against every guardrail
+// script and reports findings grouped by guardrail. Returns true if clean.
+function audit(cwd, opts) {
+  const devrailsDir = path.join(cwd, ".devrails");
+  const guardrailsDir = path.join(devrailsDir, "guardrails");
+  if (!fs.existsSync(guardrailsDir)) {
+    console.error("devrails: no .devrails/guardrails/ found. Run `devrails init` first.");
+    process.exit(1);
+  }
+
+  const scanRoot = opts.path ? path.resolve(cwd, opts.path) : cwd;
+  const files = walkProjectFiles(scanRoot);
+
+  if (files.length === 0) {
+    console.log("devrails audit: no source files found to scan.");
+    return true;
+  }
+
+  console.log(`devrails audit — scanning ${files.length} file(s)\n`);
+
+  const scripts = fs
+    .readdirSync(guardrailsDir)
+    .filter((f) => f.endsWith(".sh"))
+    .sort();
+
+  let totalViolations = 0;
+  let failedGuardrails = 0;
+  const COL = 28;
+
+  for (const scriptName of scripts) {
+    const script = path.join(guardrailsDir, scriptName);
+    const label = scriptName.replace(/\.sh$/, "");
+    const result = spawnSync("bash", [script, ...files], { cwd, encoding: "utf8" });
+
+    // Violation lines from our scripts always start with "  [label] ..."
+    // Summary lines (e.g. "block-secrets: N issue(s)") are excluded from display.
+    const violationLines = (result.stderr || "")
+      .split("\n")
+      .filter((l) => /^\s+\[/.test(l))
+      .map((l) => l.replace(/^\s+\[[^\]]+\]\s*/, "").trim());
+
+    if (result.status === 0 || violationLines.length === 0) {
+      console.log(`  ${label.padEnd(COL)} \x1b[32mpassed\x1b[0m`);
+    } else {
+      failedGuardrails++;
+      totalViolations += violationLines.length;
+      console.log(`  ${label.padEnd(COL)} \x1b[31m${violationLines.length} violation(s)\x1b[0m`);
+      for (const line of violationLines) {
+        console.log(`    ${line}`);
+      }
+    }
+  }
+
+  console.log("");
+  if (failedGuardrails === 0) {
+    console.log(`\x1b[32mdevrails audit: clean\x1b[0m — all guardrails passed (${files.length} file(s) scanned).`);
+    return true;
+  }
+
+  console.log(
+    `\x1b[31mdevrails audit: ${failedGuardrails} guardrail(s) failed\x1b[0m — ` +
+    `${totalViolations} violation(s) in ${files.length} file(s).`
+  );
+  return false;
+}
+
+module.exports = { init, sync, check, audit };

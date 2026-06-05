@@ -1,6 +1,6 @@
 "use strict";
 
-const { init, sync, check } = require("./commands.js");
+const { init, sync, check, audit } = require("./commands.js");
 
 const VERSION = require("../package.json").version;
 
@@ -9,7 +9,8 @@ const HELP = `devrails ${VERSION} — tool-agnostic guard-rails for AI-assisted 
 Usage:
   devrails init [options]     Scaffold .devrails/, pick targets, install enforcement, and sync
   devrails sync               Regenerate every target's files from .devrails/
-  devrails check [files...]   Run guard-rails over files (used by git hook & CI)
+  devrails audit [dir]        Scan the whole project and report every rule violation
+  devrails check [files...]   Run guard-rails over specific files (used by git hook & CI)
   devrails help               Show this help
 
 init options:
@@ -18,15 +19,18 @@ init options:
   --no-git-hook     Do not install the git pre-commit hook
   --no-ci           Do not write the CI workflow
 
+audit options:
+  [dir]             Directory to scan (default: project root)
+
 check options:
   --staged          Check files staged in git (default for the pre-commit hook)
 
 Targets:
-  agents  → AGENTS.md (open standard; also read by Cursor, Copilot, Gemini CLI)
-  claude  → CLAUDE.md
-  cursor  → .cursor/rules/*.mdc
-  copilot → .github/copilot-instructions.md (+ .github/instructions/*.instructions.md)
-  gemini  → GEMINI.md
+  agents  -> AGENTS.md (open standard; also read by Cursor, Copilot, Gemini CLI)
+  claude  -> CLAUDE.md
+  cursor  -> .cursor/rules/*.mdc
+  copilot -> .github/copilot-instructions.md (+ .github/instructions/*.instructions.md)
+  gemini  -> GEMINI.md
 
 Edit your rules once in .devrails/rules/, then \`devrails sync\` to every tool.`;
 
@@ -59,6 +63,12 @@ function main(args) {
       console.log("devrails sync\n");
       sync(cwd);
       break;
+    case "audit": {
+      const auditOpts = { path: opts.files[0] || null };
+      const ok = audit(cwd, auditOpts);
+      if (!ok) process.exit(1);
+      break;
+    }
     case "check":
       check(cwd, opts);
       break;

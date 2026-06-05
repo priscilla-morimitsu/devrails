@@ -1,9 +1,9 @@
 "use strict";
-// Minimal smoke test: scaffold into a temp dir, run init+sync, assert outputs exist.
+// Minimal smoke test: scaffold into a temp dir, run init+sync+audit, assert outputs exist.
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { init, sync } = require("../src/commands.js");
+const { init, sync, audit } = require("../src/commands.js");
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "devrails-test-"));
 const origCwd = process.cwd();
@@ -57,6 +57,31 @@ try {
   // re-sync should be idempotent (no throw)
   sync(tmp);
   assert(true, "second sync ran without error");
+
+  // check-code-quality.sh was scaffolded
+  assert(
+    fs.existsSync(path.join(tmp, ".devrails", "guardrails", "check-code-quality.sh")),
+    "check-code-quality guardrail scaffolded"
+  );
+
+  // audit on an empty project (no source files) should pass cleanly
+  const auditClean = audit(tmp, {});
+  assert(auditClean === true, "audit returns true when no source files found");
+
+  // audit detects violations: plant a file with a console.log and `any`
+  const srcDir = path.join(tmp, "src");
+  fs.mkdirSync(srcDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(srcDir, "bad.ts"),
+    'const x: any = 1;\nconsole.log(x);\n'
+  );
+  const auditDirty = audit(tmp, {});
+  assert(auditDirty === false, "audit returns false when violations are found");
+
+  // audit passes cleanly on a file without violations
+  fs.writeFileSync(path.join(srcDir, "bad.ts"), 'const x: unknown = 1;\n');
+  const auditFixed = audit(tmp, {});
+  assert(auditFixed === true, "audit returns true after violations are fixed");
 
   console.log("\nGenerated tree:");
   const walk = (d, p = "") => fs.readdirSync(d, { withFileTypes: true }).forEach((e) => {
