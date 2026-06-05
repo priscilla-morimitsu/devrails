@@ -29,9 +29,14 @@ try {
   assert(fs.existsSync(path.join(tmp, ".claude", "skills", "next-js-app-router-patterns", "SKILL.md")), "claude skill generated from scoped rule");
   assert(fs.existsSync(path.join(tmp, ".claude", "agents", "code-reviewer.md")), "claude subagent generated");
   assert(fs.existsSync(path.join(tmp, ".claude", "commands", "review.md")), "claude slash command generated");
-  assert(fs.existsSync(path.join(tmp, ".claude", "hooks", "pretooluse-secrets.sh")), "claude hook adapter generated");
+  assert(fs.existsSync(path.join(tmp, ".claude", "hooks", "pretooluse-secrets.sh")), "claude hook: pretooluse-secrets generated");
+  assert(fs.existsSync(path.join(tmp, ".claude", "hooks", "pretooluse-guardian.sh")), "claude hook: pretooluse-guardian generated");
+  assert(fs.existsSync(path.join(tmp, ".claude", "hooks", "posttooluse-licenses.sh")), "claude hook: posttooluse-licenses generated");
+  assert(fs.existsSync(path.join(tmp, ".claude", "hooks", "posttooluse-logger.sh")), "claude hook: posttooluse-logger generated");
   const settings = JSON.parse(fs.readFileSync(path.join(tmp, ".claude", "settings.json"), "utf8"));
-  assert(settings.hooks && settings.hooks.PreToolUse, "claude settings.json wires PreToolUse hook");
+  assert(settings.hooks && settings.hooks.PreToolUse, "claude settings.json wires PreToolUse hooks");
+  assert(settings.hooks.PreToolUse.length === 2, "settings.json has 2 PreToolUse hooks (secrets + guardian)");
+  assert(settings.hooks.PostToolUse.length === 3, "settings.json has 3 PostToolUse hooks (quality + licenses + logger)");
 
   // CLAUDE.md holds global rules; scoped ones moved to skills
   const claudeMd = fs.readFileSync(path.join(tmp, "CLAUDE.md"), "utf8");

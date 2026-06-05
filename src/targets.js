@@ -62,10 +62,18 @@ function mergeSettingsHooks(cwd) {
   const cmd = (script) => `"$CLAUDE_PROJECT_DIR/.claude/hooks/${script}"`;
   settings.hooks = Object.assign({}, settings.hooks, {
     PreToolUse: [
+      // Secrets: block writes that hardcode credentials or expose them to the client
       { matcher: "Write|Edit|MultiEdit", hooks: [{ type: "command", command: cmd("pretooluse-secrets.sh") }] },
+      // Guardian: block dangerous Bash operations (rm -rf, force-push, DROP TABLE, etc.)
+      { matcher: "Bash", hooks: [{ type: "command", command: cmd("pretooluse-guardian.sh") }] },
     ],
     PostToolUse: [
+      // Quality gate: run typecheck + lint after edits
       { matcher: "Write|Edit|MultiEdit", hooks: [{ type: "command", command: cmd("posttooluse-quality.sh") }] },
+      // License checker: warn when new npm packages carry a restrictive license
+      { matcher: "Write|Edit|MultiEdit", hooks: [{ type: "command", command: cmd("posttooluse-licenses.sh") }] },
+      // Session logger: append a JSON record for every file edit (audit trail)
+      { matcher: "Write|Edit|MultiEdit", hooks: [{ type: "command", command: cmd("posttooluse-logger.sh") }] },
     ],
   });
   return writeFile(file, JSON.stringify(settings, null, 2));

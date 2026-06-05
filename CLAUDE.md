@@ -53,12 +53,28 @@ docs/               Additional documentation
 
 ## Guardrail scripts
 
-Both scripts live in `src/scaffold/.devrails/guardrails/` and get installed into the user's project. They follow the same contract: accept file paths as positional args, write violation lines to stderr in the format `  [script-name] filepath:line: message`, exit 0 if clean, exit 1 on violations.
+Live in `src/scaffold/.devrails/guardrails/` — installed into the user's project by `init`. Contract: accept file paths as positional args, write violation lines to stderr as `  [script-name] filepath:line: message`, exit 0 if clean, exit 1 on violations.
 
-- **`block-secrets.sh`** — pattern-matches for hardcoded credentials, AWS/GitHub/API keys, private key material, and secrets in `NEXT_PUBLIC_*` or `"use client"` files.
+- **`block-secrets.sh`** — detects hardcoded credentials, AWS/GCP/Azure keys, GitHub/Stripe/Slack/Twilio/SendGrid tokens, private keys, JWTs, DB connection strings with credentials, and secrets in `NEXT_PUBLIC_*` or `"use client"` files.
 - **`check-code-quality.sh`** — detects `: any` / `as any` in TypeScript, `console.log` in non-test files, and empty `catch {}` blocks.
 
-Adding a new guardrail: create a new `.sh` in `src/scaffold/.devrails/guardrails/`, make it executable, follow the output contract above, and add assertions to the smoke test.
+Adding a new guardrail: create `.sh` in `src/scaffold/.devrails/guardrails/`, make it executable, follow the contract above, add assertions to the smoke test.
+
+## Claude Code hooks
+
+Live in `src/scaffold/claude-assets/hooks/` — copied to `.claude/hooks/` by `init`. Wired in `mergeSettingsHooks` in `src/targets.js`. Hook contract: read JSON from stdin, exit 0 to allow, exit 2 to block (PreToolUse only — stderr is shown to the model).
+
+| Hook | Event | Matcher | Purpose |
+|---|---|---|---|
+| `pretooluse-secrets.sh` | PreToolUse | Write\|Edit\|MultiEdit | Calls `block-secrets.sh` on the content about to be written |
+| `pretooluse-guardian.sh` | PreToolUse | Bash | Blocks dangerous shell operations (rm -rf, force-push, DROP TABLE, curl\|bash, etc.) |
+| `posttooluse-quality.sh` | PostToolUse | Write\|Edit\|MultiEdit | Runs `typecheck` + `lint` scripts from `package.json` |
+| `posttooluse-licenses.sh` | PostToolUse | Write\|Edit\|MultiEdit | Warns when new npm packages added to `package.json` carry a restrictive license |
+| `posttooluse-logger.sh` | PostToolUse | Write\|Edit\|MultiEdit | Appends `{timestamp, tool, file, cwd}` to `logs/devrails/session.log` |
+
+To add a new hook: create the script in `claude-assets/hooks/`, add a matcher entry in `mergeSettingsHooks` in `targets.js`, add a smoke test assertion.
+
+**Not implemented (no Claude Code equivalent):** `sessionStart`, `sessionEnd`, `userPromptSubmitted` lifecycle events (used by awesome-copilot's Session Auto-Commit, Session Logger, and Governance Audit) do not exist in Claude Code hooks.
 
 ## Key conventions
 

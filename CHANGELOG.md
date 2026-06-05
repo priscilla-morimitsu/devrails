@@ -2,6 +2,18 @@
 
 This project adheres to [Semantic Versioning](https://semver.org).
 
+## [0.2.5] - 2026-06-05
+
+### Added
+- **`pretooluse-guardian` hook** — adapted from [github/awesome-copilot tool-guardian](https://github.com/github/awesome-copilot/tree/main/hooks/tool-guardian). Fires on the `Bash` tool and blocks destructive operations before Claude executes them: recursive deletes (`rm -rf /`, `~`, `.`), force-pushes to protected branches, database drops/truncates, world-writable permissions, and piping remote content to a shell. Configurable via `SKIP_TOOL_GUARDIAN` and `TOOL_GUARDIAN_ALLOWLIST`.
+- **`posttooluse-licenses` hook** — adapted from [github/awesome-copilot dependency-license-checker](https://github.com/github/awesome-copilot/tree/main/hooks/dependency-license-checker). After Claude writes `package.json`, detects newly added npm packages that carry a restrictive license (GPL, AGPL, LGPL, SSPL, etc.) and warns. Always exits 0 — license decisions are business calls. Configurable via `SKIP_LICENSE_CHECK` and `LICENSE_ALLOWLIST`.
+- **`posttooluse-logger` hook** — adapted from [github/awesome-copilot session-logger](https://github.com/github/awesome-copilot/tree/main/hooks/session-logger). Appends a JSON record (`{timestamp, tool, file, cwd}`) to `logs/devrails/session.log` for every file-editing tool use, giving an audit trail of what the agent changed in a session. Configurable via `SKIP_LOGGING` and `DEVRAILS_LOG_DIR`.
+- **Expanded secret patterns in `block-secrets`** — adapted from [github/awesome-copilot secrets-scanner](https://github.com/github/awesome-copilot/tree/main/hooks/secrets-scanner). Added detection for: GCP service account keys, Azure storage connection strings/account keys, Stripe live keys, Slack tokens, Twilio API key SIDs, SendGrid API keys, GitHub fine-grained PATs, hardcoded JWT tokens, and database connection strings with embedded credentials.
+
+### Not ported (no Claude Code equivalent)
+- **Session Auto-Commit** — requires a `sessionEnd` lifecycle event that Claude Code does not expose.
+- **Session Logger (session lifecycle)** / **Governance Audit** — require `sessionStart`, `sessionEnd`, and `userPromptSubmitted` events not available in Claude Code hooks. The threat-detection aspect of Governance Audit is covered by `pretooluse-guardian`.
+
 ## [0.2.4] - 2026-06-05
 
 ### Fixed
