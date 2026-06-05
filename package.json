@@ -1,6 +1,6 @@
 {
   "name": "devrails",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "description": "Tool-agnostic guard-rails for AI-assisted development: one source of truth, synced to Claude Code, Cursor, Copilot, Gemini, and AGENTS.md, with deterministic enforcement via git hooks and CI.",
   "bin": {
     "devrails": "bin/devrails.js"

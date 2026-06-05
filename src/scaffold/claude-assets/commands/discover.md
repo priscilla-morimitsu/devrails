@@ -1,6 +1,6 @@
-# /discover
+# /discover [-f]
 
-Detecta o stack do projeto e busca recursos externos que ainda não estão instalados.
+Detecta o stack do projeto e busca recursos externos complementares ao devrails.
 
 ## Execução — 3 passos, mínimo de tokens
 
@@ -23,6 +23,18 @@ Com o output desse único comando, derive internamente (sem ler mais arquivos):
 - AI: openai/anthropic/@anthropic-ai/ai (Vercel AI SDK)
 - Regras já ativas: listagem de `.devrails/rules/`
 - Agents/hooks já instalados: listagem de `.claude/agents/` e `.claude/hooks/`
+
+### 1b. Catálogo nativo do devrails (nunca recomendar estes)
+
+O devrails já oferece os itens abaixo. Exclua-os das recomendações mesmo que não estejam instalados no projeto — basta sugerir `npx devrails init` se a pasta `.devrails/` não existir.
+
+**Regras**: security, code-standards, nextjs, accessibility, database
+
+**Agents**: code-reviewer, security-auditor, accessibility-auditor, test-writer, architect, tech-writer, tdd-red, tdd-green, tdd-refactor, database-reviewer, acquire-codebase, agent-owasp, ai-team, prompt-safety
+
+**Comandos**: review, new-feature, tdd, context-map, refactor-plan, discover, spec-driven, breakdown, llms-txt, git-release
+
+**Hooks**: pretooluse-secrets, pretooluse-guardian, posttooluse-quality, posttooluse-licenses, posttooluse-logger
 
 ### 2. Busca externa (paralela, 2 fontes apenas)
 
@@ -63,9 +75,23 @@ Já instalado: <n> regras, <n> agents, <n> hooks
 3. ...
 ```
 
+## Modo deep: /discover -f
+
+Remove os limites de tokens e de buscas. Use quando quiser uma varredura completa.
+
+Execute até 5 buscas externas em paralelo:
+- **Busca A**: fetch awesome-copilot README (raw)
+- **Busca B**: cursor.directory para o framework detectado
+- **Busca C**: `<framework> AGENTS.md OR ".claude/agents" site:github.com`
+- **Busca D**: npm — ferramentas de qualidade padrão do stack (linter, formatter, type checker)
+- **Busca E**: docs oficiais do framework — seção de AI coding guides ou configuração de copilot
+
+Sem cap de itens por categoria. Sem limite de tokens no output.
+
 ## Restrições
 - Apenas recursos gratuitos e open source.
+- **Nunca recomendar itens do catálogo nativo do devrails** (listados na seção 1b), mesmo que não instalados.
 - Nunca recomendar algo já presente nas listagens extraídas no passo 1.
 - Sem tabelas — bullets consomem menos tokens.
 - Sem seções com "nenhum item encontrado" — omita a seção inteira.
-- Respostas de IA devem ter no máximo 400 tokens de output.
+- Sem a flag `-f`: output máximo de 1 000 tokens e no máximo 2 buscas externas.
